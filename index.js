@@ -1,70 +1,125 @@
 const http = require('http');
+const mysql = require('mysql2/promise'); // ใช้เวอร์ชัน promise
 const url = require('url');
-const { db, initMySQL } = require('./database');
 
 const port = 3000;
 
-const server = http.createServer(async (req, res) => {
-    const parsedUrl = url.parse(req.url, true);
-    const path = parsedUrl.pathname;
-    const method = req.method;
-
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-    if (method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
-
-    const getBody = (req) => new Promise((resolve) => {
-        let body = '';
-        req.on('data', chunk => body += chunk.toString());
-        req.on('end', () => resolve(body));
+async function startServer() {
+    // 1. สร้าง Connection Pool (แนะนำมากกว่า createConnection สำหรับ Async)
+    const db = await mysql.createPool({
+        host: 'localhost',
+        user: 'root',
+        password: 'root',
+        database: 'webdb',
+        port: 8820,
+        waitForConnections: true,
+        connectionLimit: 10
     });
 
-    try {
-        if (path === '/add-product' && method === 'POST') {
-            const body = await getBody(req);
-            const { name, quantity, min_stock } = JSON.parse(body);
-            const [result] = await db.query("INSERT INTO products (name, quantity, min_stock) VALUES (?, ?, ?)", [name, quantity, min_stock]);
-            res.end(JSON.stringify({ status: "success", id: result.insertId }));
-        } 
-        else if (path === '/update-stock' && method === 'POST') {
-            const body = await getBody(req);
-            const { product_id, type, amount } = JSON.parse(body);
-            const today = new Intl.DateTimeFormat('fr-CA', { timeZone: 'Asia/Bangkok' }).format(new Date());
-            await db.query("INSERT INTO stock_logs (product_id, type, amount, log_date) VALUES (?, ?, ?, ?)", [product_id, type, amount, today]);
-            const updateSql = (type === 'IN') ? "UPDATE products SET quantity = quantity + ? WHERE id = ?" : "UPDATE products SET quantity = quantity - ? WHERE id = ?";
-            await db.query(updateSql, [amount, product_id]);
-            res.end(JSON.stringify({ status: "success", message: `บันทึก ${type} เรียบร้อย` }));
-        }
-        else if (path === '/all-products' && method === 'GET') {
-            const [results] = await db.query('SELECT * FROM products ORDER BY id ASC');
-            res.end(JSON.stringify(results));
-        }
-        else if (path === '/low-stock' && method === 'GET') {
-            const [results] = await db.query('SELECT * FROM products WHERE quantity <= min_stock');
-            res.end(JSON.stringify(results));
-        }
-        else if (path === '/report-daily' && method === 'GET') {
-            const [results] = await db.query("SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as log_date, type, SUM(amount) as total FROM stock_logs GROUP BY log_date, type ORDER BY log_date DESC");
-            res.end(JSON.stringify(results));
-        }
-        // --- ส่วนที่เพิ่มใหม่สำหรับดึงข้อมูล User ---
-        else if (path === '/all-users' && method === 'GET') {
-            const [results] = await db.query('SELECT id, username, email, role FROM User');
-            res.end(JSON.stringify(results));
-        }
-        else {
-            res.end(JSON.stringify({ message: "Path not found" }));
-        }
-    } catch (err) {
-        res.end(JSON.stringify({ status: "error", message: err.message }));
-    }
-});
+    const server = http.createServer(async (req, res) => {
+        const parsedUrl = url.parse(req.url, true);
+        const path = parsedUrl.pathname;
+        const method = req.method;
 
-async function startServer() {
-    await initMySQL(); 
-    server.listen(port, () => { console.log(`🚀 Server running at http://localhost:${port}`); });
+        // Header ตั้งค่า CORS และ JSON
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+        if (method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
+
+        // ฟังก์ชันช่วยอ่าน Body แบบ Async
+        const getBody = (req) => new Promise((resolve) => {
+            let body = '';
+            req.on('data', chunk => body += chunk.toString());
+            req.on('end', () => resolve(body));
+        });
+
+        try {
+            // 1. เพิ่มสินค้าใหม่ (POST)
+            if (path === '/add-product' && method === 'POST') {
+                const body = await getBody(req);
+                const { name, quantity, min_stock } = JSON.parse(body);
+                const [result] = await db.execute(
+                    "INSERT INTO products (name, quantity, min_stock) VALUES (?, ?, ?)", 
+                    [name, quantity, min_stock]
+                );
+                res.end(JSON.stringify({ status: "success", message: "เพิ่มสำเร็จ!", id: result.insertId }));
+            }
+
+            // 2. บันทึก เข้า-ออก และ อัปเดตสต็อก (POST)
+            else if (path === '/update-stock' && method === 'POST') {
+                const body = await getBody(req);
+                const { product_id, type, amount } = JSON.parse(body);
+                const today = new Date().toISOString().split('T')[0];
+
+                // ใช้ await ทำงานทีละขั้นตอน (Sequential)
+                // บันทึก Log
+                await db.execute(
+                    "INSERT INTO stock_logs (product_id, type, amount, log_date) VALUES (?, ?, ?, ?)", 
+                    [product_id, type, amount, today]
+                );
+
+                // อัปเดตจำนวนสินค้า
+                const updateSql = (type === 'IN') 
+                    ? "UPDATE products SET quantity = quantity + ? WHERE id = ?" 
+                    : "UPDATE products SET quantity = quantity - ? WHERE id = ?";
+                await db.execute(updateSql, [amount, product_id]);
+
+                res.end(JSON.stringify({ status: "success", message: `บันทึกรายการ ${type} เรียบร้อย!` }));
+            }
+
+            // 3. ดึงสินค้าทั้งหมด (GET)
+            else if (path === '/all-products' && method === 'GET') {
+                const [rows] = await db.query('SELECT * FROM products ORDER BY id ASC');
+                res.end(JSON.stringify(rows));
+            }
+
+            // 4. สินค้าใกล้หมด (GET)
+            else if (path === '/low-stock' && method === 'GET') {
+                const [rows] = await db.query('SELECT * FROM products WHERE quantity <= min_stock');
+                res.end(JSON.stringify(rows));
+            }
+
+            // 5. รายงานรายวัน (GET)
+            else if (path === '/report-daily' && method === 'GET') {
+                const [rows] = await db.query(`
+                    SELECT log_date AS date, type, SUM(amount) AS total 
+                    FROM stock_logs 
+                    GROUP BY date, type 
+                    ORDER BY date DESC
+                `);
+                res.end(JSON.stringify(rows));
+            }
+
+            // 6. รายงานรายเดือน (GET)
+            else if (path === '/report-monthly' && method === 'GET') {
+                const [rows] = await db.query(`
+                    SELECT DATE_FORMAT(log_date, '%Y-%m') AS date, type, SUM(amount) AS total 
+                    FROM stock_logs 
+                    GROUP BY date, type 
+                    ORDER BY date DESC
+                `);
+                res.end(JSON.stringify(rows));
+            }
+
+            else {
+                res.writeHead(404);
+                res.end(JSON.stringify({ message: "Path not found" }));
+            }
+
+        } catch (err) {
+            console.error(err);
+            res.writeHead(500);
+            res.end(JSON.stringify({ status: "error", message: err.message }));
+        }
+    });
+
+    server.listen(port, () => {
+        console.log(` Async Server is running on http://localhost:${port}`);
+    });
 }
-startServer();
+
+// เริ่มต้นระบบ
+startServer().catch(err => console.error("Server Start Failed:", err));

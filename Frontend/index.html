@@ -6,11 +6,6 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="card">
-    <h2>👤 รายชื่อผู้ใช้งานในระบบ</h2>
-    <button class="btn" onclick="loadUsers()">🔄 อัปเดตรายชื่อ User</button>
-    <div id="userDisplay" style="margin-top: 15px;"></div>
-</div>
     <div class="container">
         <h1>📦 ระบบจัดการสินค้าคงคลัง</h1>
 
@@ -39,7 +34,7 @@
         </div>
 
         <div class="card">
-            <h2>⚠️ สินค้าใกล้หมด</h2>
+            <h2>⚠️ สินค้าใกล้หมด (น้อยกว่าหรือเท่ากับ 5 ชิ้น)</h2>
             <button onclick="loadLowStock()">ตรวจสอบตอนนี้</button>
             <div id="lowStockDisplay"></div>
         </div>
@@ -55,13 +50,9 @@
     <script>
         const API = 'http://localhost:3000';
 
-        // โหลดข้อมูลเมื่อเปิดหน้าเว็บ
-        window.onload = () => {
-            loadAllProducts();
-            loadLowStock();
-        };
+        // โหลดข้อมูลสินค้าทั้งหมดทันทีที่เปิดหน้าเว็บ
+        window.onload = loadAllProducts;
 
-        // ฟังก์ชันดึงสินค้าทั้งหมด
         async function loadAllProducts() {
             try {
                 const res = await fetch(`${API}/all-products`);
@@ -84,11 +75,10 @@
                 document.getElementById('allProductsDisplay').innerHTML = html;
             } catch (error) {
                 console.error("Error:", error);
-                document.getElementById('allProductsDisplay').innerHTML = '<p style="color:red;">เชื่อมต่อเซิร์ฟเวอร์ไม่ได้</p>';
+                document.getElementById('allProductsDisplay').innerHTML = '<p style="color:red;">เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (เปิด index.js หรือยัง?)</p>';
             }
         }
 
-        // ฟังก์ชันเพิ่มสินค้าใหม่
         async function addProduct() {
             const name = document.getElementById('newName').value;
             const quantity = parseInt(document.getElementById('newQty').value);
@@ -107,23 +97,16 @@
             });
             const result = await res.json();
             alert(result.message);
-            
-            // ล้างค่าในช่องกรอกข้อมูล
-            document.getElementById('newName').value = '';
-            document.getElementById('newQty').value = '';
-            
-            loadAllProducts();
-            loadLowStock();
+            loadAllProducts(); 
         }
 
-        // ฟังก์ชันบันทึก เข้า-ออก (แบบแจ้งเตือนทันทีเมื่อของใกล้หมด)
         async function updateStock() {
             const product_id = parseInt(document.getElementById('logId').value);
             const type = document.getElementById('logType').value;
             const amount = parseInt(document.getElementById('logAmount').value);
 
             if (isNaN(product_id) || product_id <= 0 || isNaN(amount) || amount <= 0) {
-                alert("❌ กรุณากรอก ID และจำนวนให้ถูกต้อง");
+                alert("❌ กรุณากรอก ID และจำนวนให้ถูกต้อง (ต้องมากกว่า 0)");
                 return;
             }
 
@@ -134,32 +117,10 @@
                 body: JSON.stringify(data)
             });
             const result = await res.json();
-            
-            if (result.status === "success") {
-                // อัปเดตข้อมูลบนหน้าจอทันที
-                await loadAllProducts();
-                await loadLowStock();
-
-                // เช็คว่าถ้าเป็น OUT แล้วของใกล้หมด ให้เตือนด่วน
-                if (type === 'OUT') {
-                    const resAll = await fetch(`${API}/all-products`);
-                    const allProducts = await resAll.json();
-                    const currentProduct = allProducts.find(p => p.id === product_id);
-
-                    if (currentProduct && currentProduct.quantity <= currentProduct.min_stock) {
-                        alert(`⚠️ เตือนด่วน: "${currentProduct.name}" เหลือเพียง ${currentProduct.quantity} ชิ้น!`);
-                    } else {
-                        alert(result.message);
-                    }
-                } else {
-                    alert(result.message);
-                }
-            } else {
-                alert("เกิดข้อผิดพลาด: " + result.message);
-            }
+            alert(result.message);
+            loadAllProducts(); 
         }
 
-        // ฟังก์ชันดึงรายการสินค้าใกล้หมด
         async function loadLowStock() {
             const res = await fetch(`${API}/low-stock`);
             const data = await res.json();
@@ -168,10 +129,10 @@
                 html += `<tr class="low-stock"><td>${item.id}</td><td>${item.name}</td><td>${item.quantity}</td></tr>`;
             });
             html += '</table>';
-            document.getElementById('lowStockDisplay').innerHTML = data.length ? html : '<p>✅ ไม่มีสินค้าใกล้หมด</p>';
+            document.getElementById('lowStockDisplay').innerHTML = data.length ? html : '<p>ไม่มีสินค้าใกล้หมด</p>';
         }
 
-        // ฟังก์ชันรายงานสรุปยอด (ตัด ZZ ออกเรียบร้อย)
+        // --- ส่วนที่แก้ไขตามคำสั่ง (สรุปยอด รายวัน/รายเดือน) ---
         async function loadReport(mode) {
             const path = mode === 'daily' ? '/report-daily' : '/report-monthly';
             const res = await fetch(`${API}${path}`);
@@ -180,20 +141,21 @@
             let html = `<table><tr><th>${mode === 'daily' ? 'วันที่' : 'เดือน'}</th><th>ประเภท</th><th>ยอดรวม</th></tr>`;
             
             data.forEach(item => {
-                let displayDate = "";
-                if (mode === 'daily' && item.log_date) {
-                    // ตัดส่วนที่เป็น T และ ZZ ออก
-                    displayDate = item.log_date.split('T')[0];
-                } else {
-                    displayDate = item.month || item.log_date;
+                // ใช้ item.date ตามที่ Backend ส่งมา (จากคำสั่ง AS date)
+                let displayDate = item.date;
+
+                // ตัดส่วนเวลาออกให้เหลือแค่ YYYY-MM-DD
+                if (displayDate && displayDate.includes('T')) {
+                    displayDate = displayDate.split('T')[0];
                 }
 
                 html += `<tr>
-                            <td>${displayDate}</td>
-                            <td>${item.type}</td>
-                            <td>${item.total}</td>
-                         </tr>`;
+                    <td>${displayDate || "ไม่ระบุ"}</td>
+                    <td>${item.type}</td>
+                    <td>${item.total}</td>
+                </tr>`;
             });
+            
             html += '</table>';
             document.getElementById('reportDisplay').innerHTML = html;
         }
