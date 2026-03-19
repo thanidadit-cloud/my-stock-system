@@ -1,139 +1,234 @@
-/* style.css */
+/* --- 1. การตั้งค่าพื้นฐาน --- */
 body { 
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-    background-color: #f0f2f5; 
+    background-color: #cdfaf9; 
     margin: 0; 
-    padding: 20px; 
-    color: #333;
+    padding: 0; 
+    color: #222; 
 }
 
 .container { 
-    max-width: 900px; 
+    max-width: 1000px; 
     margin: auto; 
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    padding: 40px 0; /* เพิ่ม space ด้านบน */
 }
 
 h1 { 
-    text-align: center; 
     color: #1a73e8; 
-    margin-bottom: 30px;
+    margin-bottom: 5px;
+    font-weight: 800; 
     text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }
 
+header p {
+    color: #555; /* เข้มขึ้นกว่าเดิม */
+    font-size: 1.1rem;
+}
+
+/* --- 2. ระบบสลับหน้า --- */
+.section-content {
+    display: none; 
+    animation: fadeInSlide 0.4s ease-out; /* ปรับให้นุ่มนวลขึ้นเล็กน้อย */
+}
+
+@keyframes fadeInSlide {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- 3. Dashboard Grid (หน้าเมนูหลัก) --- */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 25px; /* เพิ่มระยะห่างระหว่างการ์ด */
+    margin-bottom: 40px;
+}
+
+.dash-card {
+    background: white;
+    padding: 40px 25px;
+    border-radius: 20px; /* มนขึ้น */
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06); /* เงาฟุ้งและชัดขึ้น */
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border: 1px solid #eee;
+}
+
+.dash-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(26, 115, 232, 0.15); /* เงาสีฟ้าจางๆ เวลา hover */
+    border-color: #1a73e8;
+}
+
+.dash-card .icon {
+    font-size: 50px; /* ใหญ่ขึ้น */
+    margin-bottom: 20px;
+    display: block;
+}
+
+/* --- 4. การจัดการปุ่มย้อนกลับและหัวข้อหน้า --- */
+.header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    border-bottom: 3px solid #e8f0fe; /* เส้นหนาขึ้นเพื่อให้แยกโซนชัดเจน */
+    padding-bottom: 20px;
+}
+
+.btn-back {
+    padding: 10px 20px;
+    background: #fff;
+    border: 2px solid #dadce0; /* เส้นหนาขึ้น */
+    border-radius: 12px;
+    color: #3c4043;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-back:hover {
+    background: #fffcfb;
+    border-color: #1a73e8;
+    color: #1a73e8;
+}
+
+/* --- 5. การ์ดรายละเอียด ฟอร์ม และปุ่มกดทั่วไป --- */
 .card { 
     background: white; 
-    padding: 25px; 
-    border-radius: 12px; 
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
-    margin-bottom: 25px; 
-    transition: transform 0.2s;
+    padding: 35px; 
+    border-radius: 20px; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+    margin-bottom: 30px; 
+    border: 1px solid #ffffff;
 }
 
-.card:hover {
-    transform: translateY(-2px);
-}
-
-h2 { 
-    color: #1a73e8; 
-    font-size: 1.2rem;
-    border-bottom: 2px solid #e8f0fe; 
-    padding-bottom: 12px; 
-    margin-top: 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-/* Form Styling */
 input, select { 
     width: 100%; 
-    padding: 12px; 
-    margin-bottom: 12px;
-    border: 1px solid #ddd; 
-    border-radius: 8px; 
+    padding: 14px; 
+    margin-bottom: 20px;
+    border: 2px solid #eef0f2; /* ขอบชัดขึ้น */
+    border-radius: 12px; 
     box-sizing: border-box; 
-    font-size: 15px;
-    outline: none;
-    transition: border-color 0.3s;
+    font-size: 16px;
+    background-color: #f9f9f9;
+    transition: 0.3s;
 }
 
 input:focus, select:focus {
     border-color: #1a73e8;
-    box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+    background-color: #fff;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.1);
 }
 
-/* Table Styling */
+.btn { 
+    padding: 16px 24px; 
+    border: none; 
+    border-radius: 12px; 
+    cursor: pointer; 
+    color: white; 
+    font-weight: bold; 
+    font-size: 1rem;
+    width: 100%;
+    transition: 0.3s;
+}
+
+.btn-blue { 
+    background: linear-gradient(135deg, #1a73e8, #1557b0); 
+    box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+}
+
+.btn-green { 
+    background: linear-gradient(135deg, #34a853, #2d8e47);
+    box-shadow: 0 4px 12px rgba(52, 168, 83, 0.3);
+}
+
+.btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+}
+
+/* --- 6. ปุ่มรายงานแบบ High Contrast (เน้นความชัด) --- */
+.report-menu-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* เพิ่มช่องว่าง */
+    margin-bottom: 30px;
+}
+
+.btn-report-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 25px; /* ใหญ่ขึ้น */
+    font-size: 1.3rem; /* ตัวหนังสือใหญ่ขึ้น */
+    font-weight: 800; /* หนาพิเศษ */
+    border: none;
+    border-radius: 18px;
+    cursor: pointer;
+    color: white;
+    transition: all 0.3s ease;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.2); /* เพิ่มเงาที่ตัวหนังสือให้อ่านง่าย */
+}
+
+.btn-daily-color {
+    background: #1a73e8; /* สีน้ำเงินสด */
+    border-bottom: 5px solid #1557b0; /* เพิ่มมิติแบบปุ่ม 3D */
+}
+
+.btn-monthly-color {
+    background: #34a853; /* สีเขียวสด */
+    border-bottom: 5px solid #2d8e47;
+}
+
+.btn-report-action:active {
+    transform: translateY(3px);
+    border-bottom-width: 2px;
+}
+
+/* --- 7. ตารางข้อมูล (Clean & Bold) --- */
 table { 
     width: 100%; 
     border-collapse: collapse; 
-    margin-top: 15px; 
-    background: white;
-    overflow: hidden;
-    border-radius: 8px;
+    border-radius: 12px;
+    overflow: hidden; /* ให้ขอบตารางมนตาม container */
 }
 
 th, td { 
-    border: 1px solid #edf2f7; 
-    padding: 14px; 
+    border-bottom: 1px solid #edf2f7; 
+    padding: 18px 15px; 
     text-align: left; 
 }
 
 th { 
     background-color: #f8f9fa; 
-    color: #5f6368; 
-    font-weight: 600;
+    color: #333; /* ตัวหนังสือหัวข้อเข้มขึ้น */
+    font-size: 0.9rem;
+    font-weight: 700;
     text-transform: uppercase;
-    font-size: 0.85rem;
+    letter-spacing: 0.5px;
 }
 
-tr:nth-child(even) { background-color: #fafafa; }
-tr:hover { background-color: #f1f3f4; }
-
-/* Buttons */
-.btn { 
-    padding: 12px 24px; 
-    border: none; 
-    border-radius: 8px; 
-    cursor: pointer; 
-    color: white; 
-    font-weight: bold; 
-    font-size: 15px;
-    transition: all 0.2s;
-    width: 100%; /* ให้ปุ่มในฟอร์มเต็มความกว้าง */
-    margin-top: 5px;
+td {
+    font-size: 1rem;
+    color: #444;
 }
 
-/* ปุ่มทั่วไป (เช่น ปุ่มอัปเดต) */
-button:not(.btn) {
-    padding: 10px 18px;
-    margin-right: 8px;
-    border: 1px solid #dadce0;
-    border-radius: 6px;
-    cursor: pointer;
-    background: white;
-    color: #3c4043;
-    font-weight: 500;
-    transition: background 0.2s;
+tr:hover td {
+    background-color: #f1f8ff; /* ไฮไลท์แถวเวลาเอาเมาส์ชี้ */
 }
 
-button:not(.btn):hover { 
-    background: #f8f9fa; 
-    border-color: #bdc1c6;
-}
-
-.btn-blue { background-color: #1a73e8; }
-.btn-blue:hover { background-color: #1557b0; box-shadow: 0 2px 6px rgba(26,115,232,0.3); }
-
-.btn-green { background-color: #34a853; }
-.btn-green:hover { background-color: #2d8a46; box-shadow: 0 2px 6px rgba(52,168,83,0.3); }
-
-/* Status Styles */
 .low-stock { 
-    background-color: #fce8e6 !important; 
+    background-color: #fff5f5 !important; 
     color: #d93025; 
-    font-weight: bold; 
-}
-
-/* สำหรับตัวเลข ID ในตาราง */
-td strong {
-    color: #1a73e8;
+    font-weight: 800; /* หนามากเพื่อให้สะดุดตา */
+    border-left: 5px solid #d93025; /* เพิ่มแถบสีแดงด้านหน้า */
 }

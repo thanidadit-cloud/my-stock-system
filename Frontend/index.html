@@ -2,47 +2,99 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบจัดการสต็อกสินค้า</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>📦 ระบบจัดการสินค้าคงคลัง</h1>
+        <header>
+            <h1 onclick="showSection('dashboard')" style="cursor:pointer">ระบบจัดการสินค้าคงคลัง</h1>
+        </header>
 
-        <div class="card">
-            <h2>📋 รายการสินค้าทั้งหมด (เช็ค ID ที่นี่)</h2>
-            <button class="btn" onclick="loadAllProducts()">🔄 อัปเดตรายการสินค้า</button>
-            <div id="allProductsDisplay" style="margin-top: 15px;"></div>
+        <div id="section-dashboard" class="section-content">
+            <div class="dashboard-grid">
+                <div class="dash-card" onclick="showSection('section-list')">
+                    <h3>รายการสินค้า</h3>
+                    <p>ดูสต็อกและเช็ค ID</p>
+                </div>
+                <div class="dash-card" onclick="showSection('section-update')">
+                    <h3>จัดการเข้า-ออก</h3>
+                    <p>บันทึกนำเข้า/จ่ายออก</p>
+                </div>
+                <div class="dash-card" onclick="showSection('section-low')">
+                    <h3>สินค้าใกล้หมด</h3>
+                    <p>ตรวจสอบจุดวิกฤต</p>
+                </div>
+                <div class="dash-card" onclick="showSection('section-report')">
+                    <h3>รายงานสรุป</h3>
+                    <p>สรุปยอดรายวัน/เดือน</p>
+                </div>
+            </div>
         </div>
 
-        <div class="card">
-            <h2>➕ เพิ่มสินค้าใหม่</h2>
-            <input type="text" id="newName" placeholder="ชื่อสินค้า">
-            <input type="number" id="newQty" min="1" placeholder="จำนวนเริ่มต้น">
-            <button class="btn btn-blue" onclick="addProduct()">บันทึกสินค้าใหม่</button>
+        <div id="section-list" class="card section-content">
+            <div class="header-flex">
+                <h2> รายการสินค้าทั้งหมด</h2>
+                <button class="btn-back" onclick="showSection('dashboard')"> กลับหน้าหลัก</button>
+            </div>
+            <button class="btn btn-blue" style="width:auto; margin-bottom:15px; padding: 10px 20px;" onclick="showSection('section-add')">+ เพิ่มสินค้าใหม่</button>
+            <div id="allProductsDisplay"></div>
         </div>
 
-        <div class="card">
-            <h2>🔄 บันทึก การนำเข้า - จ่ายออก</h2>
-            <input type="number" id="logId" min="1" placeholder="ใส่ ID สินค้า">
-            <select id="logType">
-                <option value="IN">นำเข้า (IN)</option>
-                <option value="OUT">จ่ายออก (OUT)</option>
-            </select>
-            <input type="number" id="logAmount" min="1" placeholder="จำนวน">
-            <button class="btn btn-green" onclick="updateStock()">บันทึกรายการ</button>
+        <div id="section-add" class="card section-content">
+            <div class="header-flex">
+                <h2> เพิ่มสินค้าใหม่</h2>
+                <button class="btn-back" onclick="showSection('section-list')">⬅ ย้อนกลับ</button>
+            </div>
+            <div class="input-group-vertical">
+                <input type="text" id="newName" placeholder="ชื่อสินค้า">
+                <input type="number" id="newQty" min="1" placeholder="จำนวนเริ่มต้น">
+                <button class="btn btn-blue" id="addBtn" onclick="addProduct()">บันทึกสินค้าใหม่</button>
+            </div>
         </div>
 
-        <div class="card">
-            <h2>⚠️ สินค้าใกล้หมด (น้อยกว่าหรือเท่ากับ 5 ชิ้น)</h2>
-            <button onclick="loadLowStock()">ตรวจสอบตอนนี้</button>
+        <div id="section-update" class="card section-content">
+            <div class="header-flex">
+                <h2> บันทึก การนำเข้า - จ่ายออก</h2>
+                <button class="btn-back" onclick="showSection('dashboard')"> กลับหน้าหลัก</button>
+            </div>
+            <div class="input-group-vertical">
+                <input type="number" id="logId" min="1" placeholder="ใส่ ID สินค้า">
+                <select id="logType">
+                    <option value="IN">นำเข้า (IN)</option>
+                    <option value="OUT">จ่ายออก (OUT)</option>
+                </select>
+                <input type="number" id="logAmount" min="1" placeholder="จำนวน">
+                <button class="btn btn-green" id="updateBtn" onclick="updateStock()">บันทึกรายการ</button>
+            </div>
+        </div>
+
+        <div id="section-low" class="card section-content">
+            <div class="header-flex">
+                <h2> สินค้าใกล้หมด </h2>
+                <button class="btn-back" onclick="showSection('dashboard')"> กลับหน้าหลัก</button>
+            </div>
+            <button class="btn btn-blue" style="width:auto; margin-bottom:15px" onclick="loadLowStock()"> อัปเดตข้อมูล</button>
             <div id="lowStockDisplay"></div>
         </div>
 
-        <div class="card">
-            <h2>📊 รายงานสรุปยอด</h2>
-            <button onclick="loadReport('daily')">สรุปรายวัน</button>
-            <button onclick="loadReport('monthly')">สรุปรายเดือน</button>
+        <div id="section-report" class="card section-content">
+            <div class="header-flex">
+                <h2>รายงานสรุปยอด</h2>
+                <button class="btn-back" onclick="showSection('dashboard')"> กลับหน้าหลัก</button>
+            </div>
+            
+            <div class="report-menu-stack">
+                <button class="btn-report-action btn-daily-color" onclick="loadReport('daily')">
+                     รายงานสรุปรายวัน
+                </button>
+                <button class="btn-report-action btn-monthly-color" onclick="loadReport('monthly')">
+                    รายงานสรุปรายเดือน
+                </button>
+            </div>
+
             <div id="reportDisplay"></div>
         </div>
     </div>
@@ -50,114 +102,90 @@
     <script>
         const API = 'http://localhost:3000';
 
-        // โหลดข้อมูลสินค้าทั้งหมดทันทีที่เปิดหน้าเว็บ
-        window.onload = loadAllProducts;
+        // --- ฟังก์ชันสลับหน้า ---
+        function showSection(id) {
+            document.querySelectorAll('.section-content').forEach(s => s.style.display = 'none');
+            const target = (id === 'dashboard') ? 'section-dashboard' : id;
+            const element = document.getElementById(target);
+            if(element) element.style.display = 'block';
 
+            // Auto-load ข้อมูลเมื่อเข้าหน้า
+            if(id === 'section-list') loadAllProducts();
+            if(id === 'section-low') loadLowStock();
+            if(id === 'section-report') document.getElementById('reportDisplay').innerHTML = '';
+        }
+
+        window.onload = () => {
+            showSection('dashboard');
+        };
+
+        // --- ฟังก์ชัน API ---
         async function loadAllProducts() {
             try {
-                const res = await fetch(`${API}/all-products`);
-                const data = await res.json();
-                
-                if (data.length === 0) {
-                    document.getElementById('allProductsDisplay').innerHTML = '<p>ยังไม่มีสินค้าในระบบ</p>';
-                    return;
-                }
-
+                const res = await axios.get(`${API}/all-products`);
                 let html = '<table><tr><th>ID</th><th>ชื่อสินค้า</th><th>คงเหลือ</th></tr>';
-                data.forEach(item => {
-                    html += `<tr>
-                                <td><strong>${item.id}</strong></td>
-                                <td>${item.name}</td>
-                                <td>${item.quantity}</td>
-                             </tr>`;
+                res.data.forEach(item => {
+                    html += `<tr><td><strong>${item.id}</strong></td><td>${item.name}</td><td>${item.quantity}</td></tr>`;
                 });
                 html += '</table>';
-                document.getElementById('allProductsDisplay').innerHTML = html;
-            } catch (error) {
-                console.error("Error:", error);
-                document.getElementById('allProductsDisplay').innerHTML = '<p style="color:red;">เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (เปิด index.js หรือยัง?)</p>';
-            }
+                document.getElementById('allProductsDisplay').innerHTML = res.data.length ? html : '<p>ไม่มีสินค้าในระบบ</p>';
+            } catch (error) { console.error(error); }
         }
 
         async function addProduct() {
             const name = document.getElementById('newName').value;
             const quantity = parseInt(document.getElementById('newQty').value);
-            const min_stock = 5; 
-
-            if (!name || isNaN(quantity) || quantity <= 0) {
-                alert("❌ กรุณากรอกชื่อสินค้าและจำนวนที่มากกว่า 0");
-                return;
-            }
-
-            const data = { name, quantity, min_stock };
-            const res = await fetch(`${API}/add-product`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const result = await res.json();
-            alert(result.message);
-            loadAllProducts(); 
+            if (!name || isNaN(quantity)) return alert("กรุณากรอกข้อมูลให้ครบ");
+            try {
+                await axios.post(`${API}/add-product`, { name, quantity, min_stock: 5 });
+                alert("เพิ่มสินค้าเรียบร้อย!");
+                document.getElementById('newName').value = '';
+                document.getElementById('newQty').value = '';
+                showSection('section-list');
+            } catch (error) { alert("เกิดข้อผิดพลาดในการบันทึก"); }
         }
 
         async function updateStock() {
             const product_id = parseInt(document.getElementById('logId').value);
             const type = document.getElementById('logType').value;
             const amount = parseInt(document.getElementById('logAmount').value);
-
-            if (isNaN(product_id) || product_id <= 0 || isNaN(amount) || amount <= 0) {
-                alert("❌ กรุณากรอก ID และจำนวนให้ถูกต้อง (ต้องมากกว่า 0)");
-                return;
-            }
-
-            const data = { product_id, type, amount };
-            const res = await fetch(`${API}/update-stock`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const result = await res.json();
-            alert(result.message);
-            loadAllProducts(); 
+            if (isNaN(product_id) || isNaN(amount)) return alert("กรุณากรอกข้อมูลให้ถูกต้อง");
+            try {
+                const res = await axios.post(`${API}/update-stock`, { product_id, type, amount });
+                alert(res.data.message);
+                document.getElementById('logId').value = '';
+                document.getElementById('logAmount').value = '';
+                showSection('section-list');
+            } catch (error) { alert("ไม่สามารถบันทึกรายการได้ (เช็ค ID สินค้า)"); }
         }
 
         async function loadLowStock() {
-            const res = await fetch(`${API}/low-stock`);
-            const data = await res.json();
-            let html = '<table><tr><th>ID</th><th>ชื่อ</th><th>คงเหลือ</th></tr>';
-            data.forEach(item => {
-                html += `<tr class="low-stock"><td>${item.id}</td><td>${item.name}</td><td>${item.quantity}</td></tr>`;
-            });
-            html += '</table>';
-            document.getElementById('lowStockDisplay').innerHTML = data.length ? html : '<p>ไม่มีสินค้าใกล้หมด</p>';
+            try {
+                const res = await axios.get(`${API}/low-stock`);
+                let html = '<table><tr><th>ID</th><th>ชื่อ</th><th>คงเหลือ</th></tr>';
+                res.data.forEach(item => {
+                    html += `<tr class="low-stock"><td>${item.id}</td><td>${item.name}</td><td>${item.quantity}</td></tr>`;
+                });
+                html += '</table>';
+                document.getElementById('lowStockDisplay').innerHTML = res.data.length ? html : '<p style="color:green; text-align:center;">✅ ไม่มีสินค้าใกล้หมด</p>';
+            } catch (err) { console.error(err); }
         }
 
-        // --- ส่วนที่แก้ไขตามคำสั่ง (สรุปยอด รายวัน/รายเดือน) ---
         async function loadReport(mode) {
             const path = mode === 'daily' ? '/report-daily' : '/report-monthly';
-            const res = await fetch(`${API}${path}`);
-            const data = await res.json();
-            
-            let html = `<table><tr><th>${mode === 'daily' ? 'วันที่' : 'เดือน'}</th><th>ประเภท</th><th>ยอดรวม</th></tr>`;
-            
-            data.forEach(item => {
-                // ใช้ item.date ตามที่ Backend ส่งมา (จากคำสั่ง AS date)
-                let displayDate = item.date;
-
-                // ตัดส่วนเวลาออกให้เหลือแค่ YYYY-MM-DD
-                if (displayDate && displayDate.includes('T')) {
-                    displayDate = displayDate.split('T')[0];
+            try {
+                const res = await axios.get(`${API}${path}`);
+                if (!res.data.length) {
+                    document.getElementById('reportDisplay').innerHTML = '<p style="text-align:center; margin-top:20px;">ไม่มีข้อมูลรายงานในขณะนี้</p>';
+                    return;
                 }
-
-                html += `<tr>
-                    <td>${displayDate || "ไม่ระบุ"}</td>
-                    <td>${item.type}</td>
-                    <td>${item.total}</td>
-                </tr>`;
-            });
-            
-            html += '</table>';
-            document.getElementById('reportDisplay').innerHTML = html;
+                let html = `<table><tr><th>${mode === 'daily' ? 'วันที่' : 'เดือน'}</th><th>ประเภท</th><th>ยอดรวม</th></tr>`;
+                res.data.forEach(item => {
+                    html += `<tr><td>${item.date}</td><td>${item.type}</td><td><strong>${item.total}</strong></td></tr>`;
+                });
+                html += '</table>';
+                document.getElementById('reportDisplay').innerHTML = html;
+            } catch (error) { alert("ไม่สามารถดึงรายงานได้"); }
         }
     </script>
 </body>
